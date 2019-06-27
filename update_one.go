@@ -21,6 +21,11 @@ type UpdateOptions struct {
 
 // 插入单条数据
 func DoUpdateOne(db executor, tableName string, data []interface{}, options UpdateOptions) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = r.(error)
+		}
+	}()
 	// 列名和值的映射关系
 	mapItem := map[string]interface{}{}
 	for i, fieldName := range options.Columns {

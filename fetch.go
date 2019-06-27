@@ -18,12 +18,18 @@ type FetchOptions struct {
 	WhereSqlArgs        []interface{} // 自定义SQL查询语句的Where子句的参数列表
 }
 
+// 获取增量数据的返回结果
+type FetchResult struct {
+	Columns     []string        `json:"columns"`      // 列名称
+	ColumnTypes []string        `json:"column_types"` // 列的数据类型
+	Data        [][]interface{} `json:"data"`         // 待同步的数据，每一行是一条数据，与列名称一一对应
+}
+
 // 获取增量更新的数据
-func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp Params, err error) {
+func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp FetchResult, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = r.(error)
-			return
 		}
 	}()
 	// 参数处理
