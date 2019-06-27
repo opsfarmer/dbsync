@@ -13,3 +13,9 @@
 ```shell
 go get -u github.com/cuckoopark/dbsync
 ```
+
+### 获取增量更新数据
+
+### 插入单条更新数据
+
+### 批量插入更新数据
