@@ -20,6 +20,12 @@ type FetchOptions struct {
 
 // 获取增量更新的数据
 func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp Params, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = r.(error)
+			return
+		}
+	}()
 	// 参数处理
 	if options.UpdateTimeFieldName == "" {
 		err = errors.New("options.UpdateTimeFieldName must be not nil")
@@ -39,8 +45,8 @@ func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp Params, er
 		whereArgs = append(whereArgs, options.WhereSqlArgs...)
 	}
 	offset, size := (options.PageNumber-1)*options.PageSize, options.PageSize
-	sqlStmt := fmt.Sprintf("SELECT * FROM %s WHERE %s LIMIT %d OFFSET %d ORDER BY %s ASC",
-		tableName, whereStmt, size, offset, options.UpdateTimeFieldName)
+	sqlStmt := fmt.Sprintf("SELECT * FROM %s WHERE %s ORDER BY %s ASC LIMIT %d OFFSET %d",
+		tableName, whereStmt, options.UpdateTimeFieldName, size, offset)
 	// 执行查询语句
 	rows, err := db.Query(sqlStmt, whereArgs...)
 	if err != nil {
@@ -69,6 +75,7 @@ func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp Params, er
 	for i, columnName := range columns {
 		if columnValidMap[i] {
 			rsp.Columns = append(rsp.Columns, columnName)
+			rsp.ColumnTypes = append(rsp.ColumnTypes, "")
 		}
 	}
 	// 处理结果集的数据
@@ -86,7 +93,11 @@ func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp Params, er
 		p := 0
 		for j, data := range cache {
 			if columnValidMap[j] {
-				item[p] = *data.(*interface{})
+				newData, dataType := convertFetchType(data)
+				item[p] = newData
+				if rsp.ColumnTypes[p] == "" && len(dataType) > 0 {
+					rsp.ColumnTypes[p] = dataType
+				}
 				p++
 			}
 		}
@@ -94,4 +105,23 @@ func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp Params, er
 	}
 	err = rows.Close()
 	return
+}
+
+// 类型转换方法
+func convertFetchType(data interface{}) (interface{}, string) {
+	item := *data.(*interface{})
+	switch item.(type) {
+	case nil: // 空值
+		return nil, ""
+	case []uint8: // 字符串
+		return string(item.([]uint8)), "string"
+	case time.Time: // 时间类型
+		return item.(time.Time).Unix(), "time"
+	case int, int8, int16, int32, int64, float32, float64, byte: // 数字型
+		return item, "number"
+	case bool: // 布尔型
+		return item, "bool"
+	default:
+		return item, ""
+	}
 }
