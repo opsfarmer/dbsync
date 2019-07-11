@@ -1,15 +1,11 @@
 package dbsync
 
 import (
-	"database/sql"
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"strings"
 	"time"
 )
-
-type executor interface {
-	Exec(query string, args ...interface{}) (sql.Result, error)
-}
 
 // 插入数据时的配置信息
 type UpdateOptions struct {
@@ -20,7 +16,7 @@ type UpdateOptions struct {
 }
 
 // 通用插入数据
-func update(db executor, tableName string, data [][]interface{}, options UpdateOptions) (err error) {
+func update(db gorm.SQLCommon, tableName string, data [][]interface{}, options UpdateOptions) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = r.(error)

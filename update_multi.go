@@ -1,6 +1,8 @@
 package dbsync
 
-import "database/sql"
+import (
+	"github.com/jinzhu/gorm"
+)
 
 // 插入多条数据时的配置信息
 type UpdateMultiOptions struct {
@@ -9,17 +11,7 @@ type UpdateMultiOptions struct {
 }
 
 // 插入多条增量更新的数据
-func DoUpdate(db *sql.DB, tableName string, data [][]interface{}, options UpdateMultiOptions) (err error) {
-	tx, err := db.Begin()
-	if err != nil {
-		return
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = r.(error)
-			_ = tx.Rollback()
-		}
-	}()
+func DoUpdate(db gorm.SQLCommon, tableName string, data [][]interface{}, options UpdateMultiOptions) (err error) {
 	dataLen := len(data)
 	for i := 0; i < (dataLen-1)/options.BatchCount+1; i++ {
 		offset := options.BatchCount * i
@@ -29,11 +21,9 @@ func DoUpdate(db *sql.DB, tableName string, data [][]interface{}, options Update
 		} else {
 			piece = data[offset : offset+options.BatchCount]
 		}
-		err = update(tx, tableName, piece, options.UpdateOptions)
-		if err != nil {
-			panic(err)
+		if err = update(db, tableName, piece, options.UpdateOptions); err != nil {
+			return
 		}
 	}
-	_ = tx.Commit()
 	return
 }

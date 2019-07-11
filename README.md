@@ -27,7 +27,7 @@ go get -u github.com/cuckoopark/dbsync
 可以批量获取一张表的最新更新的数据，方法如下：
 
 ```go
-func DoFetch(db *sql.DB, tableName string, options FetchOptions) (FetchResult, error)
+func DoFetch(db gorm.SQLCommon, tableName string, options FetchOptions) (FetchResult, error)
 ```
 
 其中参数说明：
@@ -56,7 +56,7 @@ func DoFetch(db *sql.DB, tableName string, options FetchOptions) (FetchResult, e
 接口为：
 
 ```go
-func DoUpdateOne(db executor, tableName string, data []interface{}, options UpdateOptions) error
+func DoUpdateOne(db gorm.SQLCommon, tableName string, data []interface{}, options UpdateOptions) error
 ```
 
 其中参数说明：
@@ -79,7 +79,7 @@ func DoUpdateOne(db executor, tableName string, data []interface{}, options Upda
 接口为：
 
 ```go
-func DoUpdate(db *sql.DB, tableName string, data [][]interface{}, options UpdateMultiOptions) error
+func DoUpdate(db gorm.SQLCommon, tableName string, data [][]interface{}, options UpdateMultiOptions) error
 ```
 
 相比较插入单条更新数据的接口，只是数据变成了二维数组，`options`里面多了一个配置项：

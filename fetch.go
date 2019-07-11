@@ -1,9 +1,9 @@
 package dbsync
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/jinzhu/gorm"
 	"time"
 )
 
@@ -26,7 +26,7 @@ type FetchResult struct {
 }
 
 // 获取增量更新的数据
-func DoFetch(db *sql.DB, tableName string, options FetchOptions) (rsp FetchResult, err error) {
+func DoFetch(db gorm.SQLCommon, tableName string, options FetchOptions) (rsp FetchResult, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = r.(error)
